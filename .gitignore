@@ -20,3 +20,11 @@ venv/
 
 # OS
 .DS_Store
+
+# Documentation (ignore all .md except README.md)
+*.md
+!README.md
+
+# Logs and temporary files
+*.log
+continuous-load.sh

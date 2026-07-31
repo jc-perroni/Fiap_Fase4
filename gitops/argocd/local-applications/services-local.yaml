@@ -1,0 +1,26 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: services-local
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/jc-perroni/fiap-fase-3.git
+    targetRevision: main
+    path: gitops/overlays/local
+    kustomize:
+      namePrefix: ""
+      nameSuffix: ""
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: feature-flags
+  syncPolicy:
+    syncOptions:
+      - CreateNamespace=true
+    # Manual sync for local development - no automated sync
+  ignoreDifferences:
+    - group: apps
+      kind: Deployment
+      jsonPointers:
+        - /spec/replicas

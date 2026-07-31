@@ -1,0 +1,11 @@
+# Kustomize overlay para ambiente AWS/EKS
+# Usa imagens do Amazon ECR
+
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# Base manifests
+resources:
+  - ../../base/services
+
+# Mantém as imagens ECR originais (já definidas nos deployments)

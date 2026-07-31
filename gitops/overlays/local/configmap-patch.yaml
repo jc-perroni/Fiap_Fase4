@@ -1,0 +1,17 @@
+# ConfigMap patch para ambiente LOCAL
+# Sobrescreve configurações da AWS para usar LocalStack
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: services-config
+  namespace: feature-flags
+data:
+  AUTH_SERVICE_URL: "http://auth-service.feature-flags.svc.cluster.local:8001"
+  FLAG_SERVICE_URL: "http://flag-service.feature-flags.svc.cluster.local:8002"
+  TARGETING_SERVICE_URL: "http://targeting-service.feature-flags.svc.cluster.local:8003"
+
+  # LocalStack configuration
+  AWS_REGION: "us-east-1"
+  AWS_ENDPOINT_URL: "http://localstack.feature-flags.svc.cluster.local:4566"
+  AWS_SQS_URL: "http://localstack.feature-flags.svc.cluster.local:4566/000000000000/evaluation-events"
+  AWS_DYNAMODB_TABLE: "evaluation_events"

@@ -1,0 +1,79 @@
+# Kustomize overlay para ambiente LOCAL
+# Usa imagens Docker locais (buildadas com docker-compose)
+# imagePullPolicy: Never para não tentar baixar do registry
+
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# Base manifests
+resources:
+  - ../../base/services
+  - infra/postgres-auth.yaml
+  - infra/postgres-apps.yaml
+  - infra/redis.yaml
+  - infra/localstack.yaml
+  - aws-secret.yaml
+  - service-secrets.yaml
+
+# Strategic merge patches para sobrescrever ConfigMap
+patchesStrategicMerge:
+  - configmap-patch.yaml
+
+# Patches para imagens locais
+images:
+  - name: 639645545526.dkr.ecr.us-east-1.amazonaws.com/pos2/analytics-service
+    newName: fase04-analytics-service
+    newTag: latest
+  - name: 639645545526.dkr.ecr.us-east-1.amazonaws.com/pos2/auth-service
+    newName: fase04-auth-service
+    newTag: latest
+  - name: 639645545526.dkr.ecr.us-east-1.amazonaws.com/pos2/evaluation-service
+    newName: fase04-evaluation-service
+    newTag: latest
+  - name: 639645545526.dkr.ecr.us-east-1.amazonaws.com/pos2/flag-service
+    newName: fase04-flag-service
+    newTag: latest
+  - name: 639645545526.dkr.ecr.us-east-1.amazonaws.com/pos2/targeting-service
+    newName: fase04-targeting-service
+    newTag: latest
+
+# Patches para imagePullPolicy APENAS nos serviços de aplicação
+patches:
+  - target:
+      kind: Deployment
+      name: analytics-service
+    patch: |-
+      - op: add
+        path: /spec/template/spec/containers/0/imagePullPolicy
+        value: Never
+  - target:
+      kind: Deployment
+      name: auth-service
+    patch: |-
+      - op: add
+        path: /spec/template/spec/containers/0/imagePullPolicy
+        value: Never
+  - target:
+      kind: Deployment
+      name: evaluation-service
+    patch: |-
+      - op: add
+        path: /spec/template/spec/containers/0/imagePullPolicy
+        value: Never
+  - target:
+      kind: Deployment
+      name: flag-service
+    patch: |-
+      - op: add
+        path: /spec/template/spec/containers/0/imagePullPolicy
+        value: Never
+  - target:
+      kind: Deployment
+      name: targeting-service
+    patch: |-
+      - op: add
+        path: /spec/template/spec/containers/0/imagePullPolicy
+        value: Never
+      - op: add
+        path: /spec/template/spec/containers/0/imagePullPolicy
+        value: Never
