@@ -1,0 +1,158 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: prometheus-alerts
+  namespace: observability
+  labels:
+    prometheus: kube-prometheus
+data:
+  alert-rules.yaml: |
+    groups:
+      - name: microservices-alerts
+        interval: 30s
+        rules:
+          # Alert: High HTTP 5xx Error Rate on auth-service
+          - alert: AuthServiceHighErrorRate
+            expr: |
+              (
+                sum(rate(http_requests_total{job="auth-service",status=~"5.."}[5m]))
+                /
+                sum(rate(http_requests_total{job="auth-service"}[5m]))
+              ) * 100 > 5
+            for: 2m
+            labels:
+              severity: critical
+              service: auth-service
+              team: platform
+              component: authentication
+            annotations:
+              summary: "Auth Service has high 5xx error rate"
+              description: "Auth service is experiencing {{ $value | humanizePercentage }} error rate (threshold: 5%)"
+              runbook_url: "https://runbooks.example.com/auth-service-errors"
+              dashboard: "https://grafana.local/d/auth-service"
+          
+          # Alert: Service Down
+          - alert: ServiceDown
+            expr: up{job=~".*-service"} == 0
+            for: 1m
+            labels:
+              severity: critical
+              team: platform
+            annotations:
+              summary: "Service {{ $labels.job }} is down"
+              description: "Service {{ $labels.job }} has been down for more than 1 minute"
+          
+          # Alert: High Memory Usage
+          - alert: HighMemoryUsage
+            expr: |
+              (
+                container_memory_usage_bytes{namespace="feature-flag"}
+                /
+                container_spec_memory_limit_bytes{namespace="feature-flag"}
+              ) * 100 > 90
+            for: 5m
+            labels:
+              severity: warning
+              team: platform
+            annotations:
+              summary: "High memory usage on {{ $labels.pod }}"
+              description: "Container {{ $labels.container }} in pod {{ $labels.pod }} is using {{ $value | humanizePercentage }} of memory"
+          
+          # Alert: High CPU Usage
+          - alert: HighCPUUsage
+            expr: |
+              (
+                rate(container_cpu_usage_seconds_total{namespace="feature-flag"}[5m])
+                /
+                container_spec_cpu_quota{namespace="feature-flag"}
+              ) * 100 > 80
+            for: 5m
+            labels:
+              severity: warning
+              team: platform
+            annotations:
+              summary: "High CPU usage on {{ $labels.pod }}"
+              description: "Container {{ $labels.container }} in pod {{ $labels.pod }} is using {{ $value | humanizePercentage }} of CPU"
+          
+          # Alert: Pod Restart Loop
+          - alert: PodRestartLoop
+            expr: rate(kube_pod_container_status_restarts_total{namespace="feature-flag"}[15m]) > 0.1
+            for: 5m
+            labels:
+              severity: warning
+              team: platform
+            annotations:
+              summary: "Pod {{ $labels.pod }} is in restart loop"
+              description: "Pod {{ $labels.pod }} has restarted {{ $value }} times in the last 15 minutes"
+          
+          # Alert: Slow Response Time
+          - alert: SlowResponseTime
+            expr: |
+              histogram_quantile(0.95,
+                sum(rate(http_request_duration_seconds_bucket{namespace="feature-flag"}[5m])) by (le, service)
+              ) > 1
+            for: 5m
+            labels:
+              severity: warning
+              team: platform
+            annotations:
+              summary: "Slow response time on {{ $labels.service }}"
+              description: "95th percentile response time for {{ $labels.service }} is {{ $value }}s (threshold: 1s)"
+          
+          # Alert: High SQS Message Age (Analytics Service)
+          - alert: HighSQSMessageAge
+            expr: |
+              aws_sqs_approximate_age_of_oldest_message_average{queue_name=~".*evaluation-events.*"} > 300
+            for: 5m
+            labels:
+              severity: warning
+              service: analytics-service
+              team: platform
+            annotations:
+              summary: "High message age in SQS queue"
+              description: "Messages in queue {{ $labels.queue_name }} are {{ $value }}s old (threshold: 300s)"
+          
+          # Alert: DynamoDB Throttled Requests
+          - alert: DynamoDBThrottled
+            expr: |
+              sum(rate(aws_dynamodb_user_errors_total{error="ProvisionedThroughputExceededException"}[5m])) > 0
+            for: 2m
+            labels:
+              severity: warning
+              service: analytics-service
+              team: platform
+            annotations:
+              summary: "DynamoDB requests are being throttled"
+              description: "DynamoDB table is experiencing throttled requests"
+---
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: microservices-alert-rules
+  namespace: observability
+  labels:
+    prometheus: kube-prometheus
+    role: alert-rules
+spec:
+  groups:
+    - name: microservices-alerts
+      interval: 30s
+      rules:
+        # Same rules as above but in PrometheusRule CRD format
+        - alert: AuthServiceHighErrorRate
+          expr: |
+            (
+              sum(rate(http_requests_total{job="auth-service",status=~"5.."}[5m]))
+              /
+              sum(rate(http_requests_total{job="auth-service"}[5m]))
+            ) * 100 > 5
+          for: 2m
+          labels:
+            severity: critical
+            service: auth-service
+            team: platform
+            component: authentication
+          annotations:
+            summary: "Auth Service has high 5xx error rate"
+            description: "Auth service is experiencing {{ $value | humanizePercentage }} error rate (threshold: 5%)"
+            runbook_url: "https://runbooks.example.com/auth-service-errors"

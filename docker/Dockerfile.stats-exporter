@@ -1,0 +1,16 @@
+FROM python:3.11-slim
+
+# Instalar Docker CLI
+RUN apt-get update && \
+    apt-get install -y docker.io && \
+    rm -rf /var/lib/apt/lists/*
+
+# Copiar script
+COPY docker-stats-exporter.py /app/docker-stats-exporter.py
+RUN chmod +x /app/docker-stats-exporter.py
+
+WORKDIR /app
+
+EXPOSE 9417
+
+CMD ["python3", "/app/docker-stats-exporter.py"]

@@ -1,0 +1,43 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: prometheus-helm-values
+  namespace: observability
+data:
+  values.yaml: |
+    # Reference to prometheus-values.yaml
+    # This will be managed by ArgoCD Helm chart deployment
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: prometheus-deployment-placeholder
+  namespace: observability
+  labels:
+    app: prometheus
+  annotations:
+    argocd.argoproj.io/hook: PreSync
+    argocd.argoproj.io/hook-delete-policy: BeforeHookCreation
+spec:
+  serviceName: prometheus
+  replicas: 1
+  selector:
+    matchLabels:
+      app: prometheus
+  template:
+    metadata:
+      labels:
+        app: prometheus
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9090"
+    spec:
+      containers:
+        - name: placeholder
+          image: busybox
+          command:
+            [
+              "sh",
+              "-c",
+              "echo Waiting for Helm chart deployment && sleep infinity",
+            ]

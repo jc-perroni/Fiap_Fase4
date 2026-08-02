@@ -1,0 +1,56 @@
+# docker-compose.override.yml
+# Este arquivo é carregado automaticamente pelo Docker Compose
+# Adiciona configurações de OpenTelemetry para ambiente local
+
+version: "3.8"
+
+services:
+  auth-service:
+    environment:
+      # OpenTelemetry
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
+      OTEL_SERVICE_NAME: auth-service
+      OTEL_TRACES_EXPORTER: otlp
+      OTEL_METRICS_EXPORTER: otlp
+      OTEL_LOGS_EXPORTER: otlp
+      OTEL_RESOURCE_ATTRIBUTES: service.name=auth-service,service.version=1.0.0,environment=local
+
+  flag-service:
+    environment:
+      # OpenTelemetry
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
+      OTEL_SERVICE_NAME: flag-service
+      OTEL_TRACES_EXPORTER: otlp
+      OTEL_METRICS_EXPORTER: otlp
+      OTEL_LOGS_EXPORTER: otlp
+      OTEL_RESOURCE_ATTRIBUTES: service.name=flag-service,service.version=1.0.0,environment=local
+
+  targeting-service:
+    environment:
+      # OpenTelemetry
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
+      OTEL_SERVICE_NAME: targeting-service
+      OTEL_TRACES_EXPORTER: otlp
+      OTEL_METRICS_EXPORTER: otlp
+      OTEL_LOGS_EXPORTER: otlp
+      OTEL_RESOURCE_ATTRIBUTES: service.name=targeting-service,service.version=1.0.0,environment=local
+
+  evaluation-service:
+    environment:
+      # OpenTelemetry
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
+      OTEL_SERVICE_NAME: evaluation-service
+      OTEL_TRACES_EXPORTER: otlp
+      OTEL_METRICS_EXPORTER: otlp
+      OTEL_LOGS_EXPORTER: otlp
+      OTEL_RESOURCE_ATTRIBUTES: service.name=evaluation-service,service.version=1.0.0,environment=local
+
+  analytics-service:
+    environment:
+      # OpenTelemetry
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
+      OTEL_SERVICE_NAME: analytics-service
+      OTEL_TRACES_EXPORTER: otlp
+      OTEL_METRICS_EXPORTER: otlp
+      OTEL_LOGS_EXPORTER: otlp
+      OTEL_RESOURCE_ATTRIBUTES: service.name=analytics-service,service.version=1.0.0,environment=local

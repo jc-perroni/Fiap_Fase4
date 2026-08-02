@@ -1,6 +1,63 @@
-# Executando o projeto localmente com Docker Compose
+# Feature Flag Platform
 
 Este projeto é uma plataforma de **feature flags** composta por 5 microserviços que se comunicam entre si para gerenciar, avaliar e registrar o uso de flags de funcionalidade por usuário.
+
+## 🚀 Quick Start - Teste Local
+
+**Quer testar tudo localmente antes de ir para AWS?**
+
+```bash
+# Método 1: Script helper (recomendado)
+./local.sh start
+
+# Método 2: Docker Compose direto
+docker-compose -f docker-compose.yml -f docker-compose.observability.yml up -d
+```
+
+**Acesse:**
+
+- 📊 **Grafana**: http://localhost:3000 (admin/admin)
+- 🔍 **Jaeger**: http://localhost:16686
+- 📈 **Prometheus**: http://localhost:9090
+
+**📖 Guias de Teste:**
+
+- [🧪 Testes com cURL - Comandos e Scripts](CURL_TESTING_GUIDE.md) ⭐ **NOVO**
+- [🔧 Soluções Rápidas - Problemas Comuns](QUICK_FIXES.md) ⭐ **NOVO**
+- [⚡ Scripts Helper - Comandos rápidos](SCRIPTS_HELPER.md)
+- [🐳 Docker Compose - Testes locais completos](LOCAL_TESTING.md)
+- [🚀 ArgoCD Local - Validar manifestos Kubernetes](ARGOCD_LOCAL.md)
+
+**⚡ Scripts de Teste Rápido:**
+
+```bash
+# 1. Teste completo de todos os endpoints (cria API Key automaticamente)
+./full-test.sh
+
+# 2. Gerar carga de teste (80 requisições)
+./test-load.sh
+
+# 3. Simular tráfego contínuo
+./continuous-load.sh
+```
+
+**🆘 Problemas?**
+
+```bash
+# Ver erros comuns e soluções
+cat QUICK_FIXES.md
+
+# Reset completo de emergência (se nada funcionar)
+./emergency-reset.sh
+```
+
+./continuous-load.sh
+
+````
+
+---
+
+## Executando o projeto localmente com Docker Compose
 
 ## Visão geral dos serviços
 
@@ -53,7 +110,7 @@ curl -X POST http://localhost:8001/admin/keys \
   -H "Authorization: Bearer <MASTER_KEY>" \
   -H "Content-Type: application/json" \
   -d '{"name": "minha-chave"}'
-```
+````
 
 ---
 

@@ -1,0 +1,175 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-dashboards
+  namespace: observability
+  labels:
+    grafana_dashboard: "1"
+data:
+  feature-flag-platform.json: |
+    {
+      "dashboard": {
+        "title": "Feature Flag Platform - Overview",
+        "tags": ["feature-flag", "microservices"],
+        "timezone": "browser",
+        "schemaVersion": 16,
+        "version": 1,
+        "refresh": "30s",
+        "panels": [
+          {
+            "id": 1,
+            "title": "Services Health",
+            "type": "stat",
+            "gridPos": {"x": 0, "y": 0, "w": 24, "h": 3},
+            "targets": [
+              {
+                "expr": "up{namespace=\"feature-flag\"}",
+                "legendFormat": "{{job}}",
+                "refId": "A"
+              }
+            ],
+            "fieldConfig": {
+              "defaults": {
+                "thresholds": {
+                  "mode": "absolute",
+                  "steps": [
+                    {"value": 0, "color": "red"},
+                    {"value": 1, "color": "green"}
+                  ]
+                }
+              }
+            }
+          },
+          {
+            "id": 2,
+            "title": "Request Rate (req/s)",
+            "type": "graph",
+            "gridPos": {"x": 0, "y": 3, "w": 12, "h": 8},
+            "targets": [
+              {
+                "expr": "sum(rate(http_requests_total{namespace=\"feature-flag\"}[5m])) by (service)",
+                "legendFormat": "{{service}}",
+                "refId": "A"
+              }
+            ]
+          },
+          {
+            "id": 3,
+            "title": "Error Rate (%)",
+            "type": "graph",
+            "gridPos": {"x": 12, "y": 3, "w": 12, "h": 8},
+            "targets": [
+              {
+                "expr": "100 * sum(rate(http_requests_total{namespace=\"feature-flag\",status=~\"5..\"}[5m])) by (service) / sum(rate(http_requests_total{namespace=\"feature-flag\"}[5m])) by (service)",
+                "legendFormat": "{{service}}",
+                "refId": "A"
+              }
+            ],
+            "fieldConfig": {
+              "defaults": {
+                "thresholds": {
+                  "mode": "absolute",
+                  "steps": [
+                    {"value": 0, "color": "green"},
+                    {"value": 1, "color": "yellow"},
+                    {"value": 5, "color": "red"}
+                  ]
+                }
+              }
+            }
+          },
+          {
+            "id": 4,
+            "title": "Response Time P95 (ms)",
+            "type": "graph",
+            "gridPos": {"x": 0, "y": 11, "w": 12, "h": 8},
+            "targets": [
+              {
+                "expr": "histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket{namespace=\"feature-flag\"}[5m])) by (le, service)) * 1000",
+                "legendFormat": "{{service}}",
+                "refId": "A"
+              }
+            ]
+          },
+          {
+            "id": 5,
+            "title": "Pod Memory Usage",
+            "type": "graph",
+            "gridPos": {"x": 12, "y": 11, "w": 12, "h": 8},
+            "targets": [
+              {
+                "expr": "sum(container_memory_usage_bytes{namespace=\"feature-flag\"}) by (pod) / 1024 / 1024",
+                "legendFormat": "{{pod}}",
+                "refId": "A"
+              }
+            ]
+          },
+          {
+            "id": 6,
+            "title": "SQS Queue Depth (Analytics)",
+            "type": "stat",
+            "gridPos": {"x": 0, "y": 19, "w": 8, "h": 4},
+            "targets": [
+              {
+                "expr": "aws_sqs_approximate_number_of_messages_visible_average{queue_name=~\".*evaluation-events.*\"}",
+                "refId": "A"
+              }
+            ]
+          },
+          {
+            "id": 7,
+            "title": "DynamoDB Write Units",
+            "type": "graph",
+            "gridPos": {"x": 8, "y": 19, "w": 8, "h": 4},
+            "targets": [
+              {
+                "expr": "rate(aws_dynamodb_consumed_write_capacity_units_sum[5m])",
+                "legendFormat": "{{table_name}}",
+                "refId": "A"
+              }
+            ]
+          },
+          {
+            "id": 8,
+            "title": "Active Alerts",
+            "type": "stat",
+            "gridPos": {"x": 16, "y": 19, "w": 8, "h": 4},
+            "targets": [
+              {
+                "expr": "ALERTS{alertstate=\"firing\",namespace=\"feature-flag\"}",
+                "legendFormat": "{{alertname}}",
+                "refId": "A"
+              }
+            ],
+            "fieldConfig": {
+              "defaults": {
+                "thresholds": {
+                  "mode": "absolute",
+                  "steps": [
+                    {"value": 0, "color": "green"},
+                    {"value": 1, "color": "red"}
+                  ]
+                }
+              }
+            }
+          },
+          {
+            "id": 9,
+            "title": "Recent Logs (Errors)",
+            "type": "logs",
+            "gridPos": {"x": 0, "y": 23, "w": 24, "h": 8},
+            "targets": [
+              {
+                "expr": "{namespace=\"feature-flag\"} |= \"error\" or \"ERROR\" or \"Error\"",
+                "refId": "A"
+              }
+            ],
+            "options": {
+              "showTime": true,
+              "showLabels": true,
+              "wrapLogMessage": true
+            }
+          }
+        ]
+      }
+    }

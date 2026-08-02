@@ -10,6 +10,9 @@ from dotenv import load_dotenv
 from functools import wraps
 import logging
 
+# OpenTelemetry
+from otel_setup import setup_opentelemetry, instrument_flask_app, instrument_psycopg2
+
 # Configura o logging
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
@@ -18,6 +21,11 @@ log = logging.getLogger(__name__)
 load_dotenv() 
 
 app = Flask(__name__)
+
+# --- OpenTelemetry Setup ---
+tracer, meter = setup_opentelemetry("targeting-service", "1.0.0")
+instrument_flask_app(app)
+instrument_psycopg2()
 
 # --- Configuração ---
 DATABASE_URL = os.getenv("DATABASE_URL")

@@ -1,0 +1,102 @@
+# OpenTelemetry Collector - Configuração Local
+# Recebe telemetria dos serviços e exporta para Jaeger, Prometheus e Loki
+
+receivers:
+  # OTLP receiver para traces, metrics e logs
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+
+  # Jaeger receiver
+  jaeger:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:14250
+      thrift_http:
+        endpoint: 0.0.0.0:14268
+
+  # Zipkin receiver
+  zipkin:
+    endpoint: 0.0.0.0:9411
+
+processors:
+  # Batch processor
+  batch:
+    timeout: 10s
+    send_batch_size: 1024
+
+  # Memory limiter
+  memory_limiter:
+    check_interval: 1s
+    limit_mib: 512
+    spike_limit_mib: 128
+
+  # Resource processor
+  resource:
+    attributes:
+      - key: deployment.environment
+        value: local
+        action: upsert
+      - key: service.namespace
+        value: feature-flag
+        action: upsert
+
+exporters:
+  # Jaeger exporter (Traces)
+  otlp/jaeger:
+    endpoint: jaeger:4317
+    tls:
+      insecure: true
+
+  # Prometheus exporter (Metrics)
+  prometheus:
+    endpoint: "0.0.0.0:8889"
+    namespace: app
+
+  # Loki exporter (Logs)
+  loki:
+    endpoint: http://loki:3100/loki/api/v1/push
+    default_labels_enabled:
+      exporter: true
+      job: true
+
+  # Logging exporter (Debug)
+  logging:
+    loglevel: info
+    sampling_initial: 5
+    sampling_thereafter: 200
+
+extensions:
+  health_check:
+    endpoint: 0.0.0.0:13133
+
+service:
+  extensions: [health_check]
+
+  pipelines:
+    # Pipeline de Traces
+    traces:
+      receivers: [otlp, jaeger, zipkin]
+      processors: [memory_limiter, resource, batch]
+      exporters: [otlp/jaeger, logging]
+
+    # Pipeline de Metrics
+    metrics:
+      receivers: [otlp]
+      processors: [memory_limiter, resource, batch]
+      exporters: [prometheus]
+
+    # Pipeline de Logs
+    logs:
+      receivers: [otlp]
+      processors: [memory_limiter, resource, batch]
+      exporters: [loki, logging]
+
+  telemetry:
+    logs:
+      level: info
+    metrics:
+      address: 0.0.0.0:8888

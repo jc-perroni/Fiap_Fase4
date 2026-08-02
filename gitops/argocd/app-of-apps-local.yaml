@@ -1,0 +1,30 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# App of Apps — LOCAL ENVIRONMENT
+#
+# Usa o overlay Kustomize para ambiente local com imagens Docker locais
+#
+# Como aplicar:
+#   kubectl apply -f gitops/argocd/app-of-apps-local.yaml
+# ─────────────────────────────────────────────────────────────────────────────
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: feature-flags-local
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/jc-perroni/fiap-fase-3.git
+    targetRevision: main
+    path: gitops/overlays/local
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: feature-flags
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

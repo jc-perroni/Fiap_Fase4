@@ -3,3 +3,17 @@ Werkzeug==3.1.3
 gunicorn==23.0.0
 python-dotenv==1.1.0
 boto3==1.38.23
+
+# OpenTelemetry dependencies
+opentelemetry-api==1.21.0
+opentelemetry-sdk==1.21.0
+opentelemetry-instrumentation==0.42b0
+opentelemetry-instrumentation-flask==0.42b0
+opentelemetry-instrumentation-requests==0.42b0
+opentelemetry-instrumentation-boto3sqs==0.42b0
+opentelemetry-instrumentation-botocore==0.42b0
+opentelemetry-exporter-otlp-proto-grpc==1.21.0
+opentelemetry-exporter-otlp-proto-http==1.21.0
+
+# Datadog integration
+ddtrace==2.3.0

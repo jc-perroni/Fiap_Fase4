@@ -1,0 +1,126 @@
+# Loki Configuration via Helm
+# Helm Chart: grafana/loki-stack
+
+loki:
+  enabled: true
+  persistence:
+    enabled: true
+    storageClassName: standard
+    size: 10Gi
+  config:
+    auth_enabled: false
+    server:
+      http_listen_port: 3100
+
+    ingester:
+      chunk_idle_period: 3m
+      chunk_block_size: 262144
+      chunk_retain_period: 1m
+      max_transfer_retries: 0
+      lifecycler:
+        ring:
+          kvstore:
+            store: inmemory
+          replication_factor: 1
+
+    limits_config:
+      enforce_metric_name: false
+      reject_old_samples: true
+      reject_old_samples_max_age: 168h
+      ingestion_rate_mb: 10
+      ingestion_burst_size_mb: 20
+
+    schema_config:
+      configs:
+        - from: 2020-10-24
+          store: boltdb-shipper
+          object_store: filesystem
+          schema: v11
+          index:
+            prefix: index_
+            period: 24h
+
+    storage_config:
+      boltdb_shipper:
+        active_index_directory: /loki/boltdb-shipper-active
+        cache_location: /loki/boltdb-shipper-cache
+        cache_ttl: 24h
+        shared_store: filesystem
+      filesystem:
+        directory: /loki/chunks
+
+    chunk_store_config:
+      max_look_back_period: 0s
+
+    table_manager:
+      retention_deletes_enabled: true
+      retention_period: 336h # 14 days
+
+  serviceMonitor:
+    enabled: true
+    labels:
+      release: prometheus
+
+# Promtail for log collection
+promtail:
+  enabled: true
+  config:
+    serverPort: 3101
+    clients:
+      - url: http://{{ .Release.Name }}-loki:3100/loki/api/v1/push
+
+    positions:
+      filename: /run/promtail/positions.yaml
+
+    scrape_configs:
+      # Scrape all pod logs
+      - job_name: kubernetes-pods
+        kubernetes_sd_configs:
+          - role: pod
+
+        pipeline_stages:
+          - docker: {}
+          - json:
+              expressions:
+                level: level
+                timestamp: time
+                message: message
+          - labels:
+              level:
+              timestamp:
+
+        relabel_configs:
+          - source_labels: [__meta_kubernetes_pod_node_name]
+            target_label: __host__
+
+          - action: labelmap
+            regex: __meta_kubernetes_pod_label_(.+)
+
+          - source_labels: [__meta_kubernetes_namespace]
+            target_label: namespace
+
+          - source_labels: [__meta_kubernetes_pod_name]
+            target_label: pod
+
+          - source_labels: [__meta_kubernetes_pod_container_name]
+            target_label: container
+
+          - replacement: /var/log/pods/*$1/*.log
+            separator: /
+            source_labels:
+              - __meta_kubernetes_pod_uid
+              - __meta_kubernetes_pod_container_name
+            target_label: __path__
+
+  serviceMonitor:
+    enabled: true
+    labels:
+      release: prometheus
+
+# Fluent Bit as alternative log shipper (disabled by default)
+fluent-bit:
+  enabled: false
+
+# Grafana integration (will be configured in Grafana)
+grafana:
+  enabled: false

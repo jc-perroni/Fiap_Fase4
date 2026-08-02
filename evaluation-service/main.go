@@ -12,6 +12,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/sqs"
 	"github.com/go-redis/redis/v8"
 	"github.com/joho/godotenv"
+	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 )
 
 // Contexto global para o Redis
@@ -29,6 +30,19 @@ type App struct {
 
 func main() {
 	_ = godotenv.Load() // Carrega .env para dev local
+
+	// --- OpenTelemetry Setup ---
+	shutdown, err := InitOpenTelemetry("evaluation-service", "1.0.0")
+	if err != nil {
+		log.Printf("Warning: Failed to initialize OpenTelemetry: %v", err)
+	} else {
+		defer func() {
+			if err := shutdown(ctx); err != nil {
+				log.Printf("Error shutting down tracer provider: %v", err)
+			}
+		}()
+		log.Println("OpenTelemetry initialized successfully")
+	}
 
 	// --- Configuração ---
 	port := os.Getenv("PORT")
@@ -109,8 +123,11 @@ func main() {
 	mux.HandleFunc("/health", app.healthHandler)
 	mux.HandleFunc("/evaluate", app.evaluationHandler)
 
+	// Wrap the mux with OpenTelemetry instrumentation
+	handler := otelhttp.NewHandler(mux, "evaluation-service")
+
 	log.Printf("Serviço de Avaliação (Go) rodando na porta %s", port)
-	if err := http.ListenAndServe(":"+port, mux); err != nil {
+	if err := http.ListenAndServe(":"+port, handler); err != nil {
 		log.Fatal(err)
 	}
 }

@@ -1,0 +1,145 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: alertmanager-config
+  namespace: observability
+data:
+  alertmanager.yml: |
+    global:
+      resolve_timeout: 5m
+
+    # External integrations
+    receivers:
+      - name: 'null'
+      
+      - name: 'pagerduty-critical'
+        pagerduty_configs:
+          - service_key: 'c62c9e6fbbdf4508c09947a5d91cacda'
+            description: '{{ .CommonAnnotations.summary }}'
+            severity: '{{ .CommonLabels.severity }}'
+            details:
+              firing: '{{ template "pagerduty.default.instances" .Alerts.Firing }}'
+              resolved: '{{ template "pagerduty.default.instances" .Alerts.Resolved }}'
+              num_firing: '{{ .Alerts.Firing | len }}'
+              num_resolved: '{{ .Alerts.Resolved | len }}'
+      
+      - name: 'slack-notifications'
+        slack_configs:
+          - api_url: 'YOUR_SLACK_WEBHOOK_URL'
+            channel: '#alerts'
+            title: '{{ .CommonLabels.alertname }}'
+            text: |
+              {{ range .Alerts }}
+              *Alert:* {{ .Labels.alertname }} - {{ .Labels.severity }}
+              *Description:* {{ .Annotations.description }}
+              *Service:* {{ .Labels.service }}
+              *Details:*
+              {{ range .Labels.SortedPairs }} • *{{ .Name }}:* `{{ .Value }}`
+              {{ end }}
+              {{ end }}
+            send_resolved: true
+      
+      - name: 'webhook-self-healing'
+        webhook_configs:
+          - url: 'http://self-healing-webhook.observability.svc.cluster.local:8080/alert'
+            send_resolved: true
+            http_config:
+              basic_auth:
+                username: 'webhook'
+                password: 'YOUR_WEBHOOK_PASSWORD'
+
+    # Routing rules
+    route:
+      group_by: ['alertname', 'service']
+      group_wait: 10s
+      group_interval: 10s
+      repeat_interval: 12h
+      receiver: 'null'
+      
+      routes:
+        # Critical alerts go to PagerDuty
+        - match:
+            severity: critical
+          receiver: pagerduty-critical
+          continue: true
+        
+        # All alerts go to Slack
+        - match_re:
+            severity: warning|critical
+          receiver: slack-notifications
+          continue: true
+        
+        # Self-healing webhook for specific alerts
+        - match_re:
+            alertname: AuthServiceHighErrorRate|ServiceDown|PodRestartLoop
+          receiver: webhook-self-healing
+
+    # Inhibition rules (suppress alerts when others are firing)
+    inhibit_rules:
+      - source_match:
+          severity: 'critical'
+        target_match:
+          severity: 'warning'
+        equal: ['service', 'alertname']
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: alertmanager
+  namespace: observability
+  labels:
+    app: alertmanager
+spec:
+  type: ClusterIP
+  ports:
+    - port: 9093
+      targetPort: 9093
+      protocol: TCP
+      name: web
+  selector:
+    app: alertmanager
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: alertmanager
+  namespace: observability
+  labels:
+    app: alertmanager
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: alertmanager
+  template:
+    metadata:
+      labels:
+        app: alertmanager
+    spec:
+      containers:
+        - name: alertmanager
+          image: prom/alertmanager:v0.26.0
+          args:
+            - "--config.file=/etc/alertmanager/alertmanager.yml"
+            - "--storage.path=/alertmanager"
+          ports:
+            - name: web
+              containerPort: 9093
+          volumeMounts:
+            - name: config
+              mountPath: /etc/alertmanager
+            - name: storage
+              mountPath: /alertmanager
+          resources:
+            requests:
+              cpu: 50m
+              memory: 128Mi
+            limits:
+              cpu: 200m
+              memory: 256Mi
+      volumes:
+        - name: config
+          configMap:
+            name: alertmanager-config
+        - name: storage
+          emptyDir: {}

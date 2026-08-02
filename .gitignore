@@ -14,6 +14,9 @@ __pycache__/
 .venv/
 venv/
 
+# Secrets — nunca versionar
+.env
+
 # Go
 *.exe
 *.test

@@ -26,6 +26,7 @@ COPY --from=builder /opt/venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
 
 COPY app.py .
+COPY otel_setup.py .
 
 RUN addgroup --system appgroup && adduser --system --ingroup appgroup appuser
 USER appuser

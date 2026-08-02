@@ -80,6 +80,7 @@ services:
     environment:
       DATABASE_URL: postgres://postgres:postgres@postgres-apps:5432/flags_db
       AUTH_SERVICE_URL: http://auth-service:8001
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
     depends_on:
       postgres-apps:
         condition: service_healthy
@@ -93,6 +94,7 @@ services:
     environment:
       DATABASE_URL: postgres://postgres:postgres@postgres-apps:5432/targeting_db
       AUTH_SERVICE_URL: http://auth-service:8001
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
     depends_on:
       postgres-apps:
         condition: service_healthy
@@ -135,6 +137,7 @@ services:
       AWS_ACCESS_KEY_ID: test
       AWS_SECRET_ACCESS_KEY: test
       AWS_ENDPOINT_URL: http://localstack:4566
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
     depends_on:
       localstack:
         condition: service_healthy
@@ -143,3 +146,7 @@ volumes:
   postgres-auth-data:
   postgres-apps-data:
   localstack-data:
+
+networks:
+  default:
+    name: feature-flag-network

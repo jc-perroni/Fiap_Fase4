@@ -1,24 +1,27 @@
+# ArgoCD Application para ambiente LOCAL
+# Monitora os recursos já deployados no cluster via kubectl
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: services-local
+  name: feature-flags-local
   namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
 spec:
   project: default
+  # Source vazio - monitora recursos existentes sem sincronizar
   source:
-    repoURL: https://github.com/jc-perroni/Fiap_Fase4.git
+    repoURL: https://github.com/jc-perroni/fiap-fase-3.git
     targetRevision: main
     path: gitops/overlays/local
-    kustomize:
-      namePrefix: ""
-      nameSuffix: ""
   destination:
     server: https://kubernetes.default.svc
     namespace: feature-flags
   syncPolicy:
+    # Sincronização manual para evitar conflitos
     syncOptions:
       - CreateNamespace=true
-    # Manual sync for local development - no automated sync
+  # Ignora diferenças esperadas
   ignoreDifferences:
     - group: apps
       kind: Deployment

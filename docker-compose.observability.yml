@@ -1,0 +1,162 @@
+# Stack de Observabilidade Local
+# Usar junto com docker-compose.yml principal
+#
+# Como usar:
+#   docker-compose -f docker-compose.yml -f docker-compose.observability.yml up -d
+
+services:
+  # =============================================================
+  # OpenTelemetry Collector (Hub Central)
+  # =============================================================
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.91.0
+    command: ["--config=/etc/otel-collector-config.yaml"]
+    volumes:
+      - ./docker/otel-collector-config-local.yaml:/etc/otel-collector-config.yaml:ro
+    ports:
+      - "4317:4317" # OTLP gRPC
+      - "4318:4318" # OTLP HTTP
+      - "14250:14250" # Jaeger gRPC
+      - "14268:14268" # Jaeger HTTP
+      - "9411:9411" # Zipkin
+      # - "8888:8888" # Prometheus metrics (uso interno)
+      - "13133:13133" # Health check
+    depends_on:
+      - jaeger
+      - prometheus
+      - loki
+
+  # =============================================================
+  # Jaeger (Distributed Tracing UI)
+  # =============================================================
+  jaeger:
+    image: jaegertracing/all-in-one:1.52
+    environment:
+      COLLECTOR_OTLP_ENABLED: "true"
+    ports:
+      - "16686:16686" # Jaeger UI
+      - "14269:14269" # Admin port
+    networks:
+      - default
+
+  # =============================================================
+  # Prometheus (Métricas)
+  # =============================================================
+  prometheus:
+    image: prom/prometheus:v2.48.1
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--web.console.libraries=/usr/share/prometheus/console_libraries"
+      - "--web.console.templates=/usr/share/prometheus/consoles"
+      - "--storage.tsdb.retention.time=7d"
+      - "--web.enable-lifecycle"
+    volumes:
+      - ./docker/prometheus-local.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    ports:
+      - "9090:9090"
+    networks:
+      - default
+
+  # =============================================================
+  # Loki (Logs)
+  # =============================================================
+  loki:
+    image: grafana/loki:2.9.3
+    command: -config.file=/etc/loki/local-config.yaml
+    ports:
+      - "3100:3100"
+    volumes:
+      - loki-data:/loki
+    networks:
+      - default
+
+  # =============================================================
+  # Promtail (Log Collector)
+  # =============================================================
+  promtail:
+    image: grafana/promtail:2.9.3
+    container_name: promtail
+    volumes:
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./docker/promtail-config.yaml:/etc/promtail/config.yaml:ro
+    command: -config.file=/etc/promtail/config.yaml
+    depends_on:
+      - loki
+    networks:
+      - default
+
+  # =============================================================
+  # Grafana (Visualização)
+  # =============================================================
+  grafana:
+    image: grafana/grafana:10.2.3
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_INSTALL_PLUGINS: grafana-piechart-panel
+    volumes:
+      - ./docker/grafana-datasources.yml:/etc/grafana/provisioning/datasources/datasources.yml:ro
+      - ./docker/grafana-dashboards.yml:/etc/grafana/provisioning/dashboards/dashboards.yml:ro
+      - ./docker/dashboards:/var/lib/grafana/dashboards:ro
+      - grafana-data:/var/lib/grafana
+    ports:
+      - "3000:3000"
+    depends_on:
+      - prometheus
+      - loki
+      - jaeger
+    networks:
+      - default
+
+  # =============================================================
+  # cAdvisor (Métricas de Containers) - DESABILITADO NO MACOS
+  # No macOS com Docker Desktop, o cAdvisor não consegue acessar
+  # containers individuais. Substituído por docker-exporter.
+  # =============================================================
+  # cadvisor:
+  #   image: gcr.io/cadvisor/cadvisor:v0.47.2
+  #   container_name: cadvisor
+  #   ports:
+  #     - "8080:8080"
+  #   volumes:
+  #     - /:/rootfs:ro
+  #     - /var/run/docker.sock:/var/run/docker.sock:ro
+  #     - /sys:/sys:ro
+  #     - /var/lib/docker/:/var/lib/docker:ro
+  #     - /dev/disk/:/dev/disk:ro
+  #   privileged: false
+  #   command:
+  #     - "--housekeeping_interval=10s"
+  #     - "--allow_dynamic_housekeeping=true"
+  #     - "--storage_duration=2m"
+  #   networks:
+  #     - default
+
+  # =============================================================
+  # Docker Stats Exporter (Customizado para macOS)
+  # Coleta métricas via 'docker stats' e expõe no formato Prometheus
+  # =============================================================
+  docker-stats-exporter:
+    build:
+      context: ./docker
+      dockerfile: Dockerfile.stats-exporter
+    container_name: docker-stats-exporter
+    ports:
+      - "9417:9417"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      - default
+
+volumes:
+  prometheus-data:
+  loki-data:
+  grafana-data:
+
+networks:
+  default:
+    name: feature-flag-network

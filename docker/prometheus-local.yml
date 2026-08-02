@@ -1,0 +1,63 @@
+# Prometheus - Configuração Local
+
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    cluster: "local"
+    environment: "development"
+
+scrape_configs:
+  # OpenTelemetry Collector metrics
+  - job_name: "otel-collector"
+    static_configs:
+      - targets: ["otel-collector:8889"]
+        labels:
+          service: "otel-collector"
+
+  # Prometheus self-monitoring
+  - job_name: "prometheus"
+    static_configs:
+      - targets: ["localhost:9090"]
+
+  # Docker Stats Exporter (Custom - macOS compatible)
+  - job_name: "docker-stats"
+    static_configs:
+      - targets: ["docker-stats-exporter:9417"]
+        labels:
+          service: "docker-stats-exporter"
+
+  # Auth Service (Go) - NÃO expõe /metrics
+  # - job_name: "auth-service"
+  #   static_configs:
+  #     - targets: ["auth-service:8001"]
+  #       labels:
+  #         service: "auth-service"
+
+  # Flag Service (Python) - NÃO expõe /metrics
+  # - job_name: "flag-service"
+  #   static_configs:
+  #     - targets: ["flag-service:5000"]
+  #       labels:
+  #         service: "flag-service"
+
+  # Targeting Service (Python) - NÃO expõe /metrics
+  # - job_name: "targeting-service"
+  #   static_configs:
+  #     - targets: ["targeting-service:5000"]
+  #       labels:
+  #         service: "targeting-service"
+
+  # Evaluation Service (Go) - NÃO expõe /metrics
+  # - job_name: "evaluation-service"
+  #   static_configs:
+  #     - targets: ["evaluation-service:8004"]
+  #       labels:
+  #         service: "evaluation-service"
+
+  # Analytics Service (Python)
+  - job_name: "analytics-service"
+    static_configs:
+      - targets: ["analytics-service:5000"]
+        labels:
+          service: "analytics-service"

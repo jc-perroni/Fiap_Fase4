@@ -1,0 +1,178 @@
+# Grafana Configuration via Helm
+# Helm Chart: grafana/grafana
+
+replicas: 1
+
+image:
+  repository: grafana/grafana
+  tag: 10.2.3
+  pullPolicy: IfNotPresent
+
+service:
+  type: ClusterIP
+  port: 80
+  targetPort: 3000
+
+ingress:
+  enabled: true
+  ingressClassName: nginx
+  hosts:
+    - grafana.local
+  path: /
+
+persistence:
+  enabled: true
+  storageClassName: standard
+  size: 10Gi
+
+# Admin credentials
+adminUser: admin
+# adminPassword will be set via secret
+
+# Datasources
+datasources:
+  datasources.yaml:
+    apiVersion: 1
+    datasources:
+      # Prometheus
+      - name: Prometheus
+        type: prometheus
+        access: proxy
+        url: http://prometheus-kube-prometheus-prometheus.observability.svc.cluster.local:9090
+        isDefault: true
+        editable: true
+        jsonData:
+          timeInterval: 30s
+
+      # Loki
+      - name: Loki
+        type: loki
+        access: proxy
+        url: http://loki.observability.svc.cluster.local:3100
+        editable: true
+        jsonData:
+          maxLines: 1000
+
+# Dashboard providers
+dashboardProviders:
+  dashboardproviders.yaml:
+    apiVersion: 1
+    providers:
+      - name: "default"
+        orgId: 1
+        folder: ""
+        type: file
+        disableDeletion: false
+        editable: true
+        options:
+          path: /var/lib/grafana/dashboards/default
+
+      - name: "observability"
+        orgId: 1
+        folder: "Observability"
+        type: file
+        disableDeletion: false
+        editable: true
+        options:
+          path: /var/lib/grafana/dashboards/observability
+
+# Pre-configured dashboards
+dashboards:
+  default:
+    kubernetes-cluster:
+      gnetId: 7249
+      revision: 1
+      datasource: Prometheus
+
+    kubernetes-pods:
+      gnetId: 6417
+      revision: 1
+      datasource: Prometheus
+
+    node-exporter:
+      gnetId: 1860
+      revision: 31
+      datasource: Prometheus
+
+  observability:
+    loki-logs:
+      gnetId: 13639
+      revision: 2
+      datasource: Loki
+
+    microservices-overview:
+      gnetId: 15489
+      revision: 1
+      datasource: Prometheus
+
+# Grafana configuration
+grafana.ini:
+  server:
+    root_url: http://grafana.local
+    serve_from_sub_path: false
+
+  security:
+    admin_user: admin
+    # admin_password will be set via secret
+
+  users:
+    allow_sign_up: false
+    auto_assign_org: true
+    auto_assign_org_role: Viewer
+
+  auth.anonymous:
+    enabled: false
+
+  alerting:
+    enabled: true
+
+  unified_alerting:
+    enabled: true
+
+  log:
+    mode: console
+    level: info
+
+  plugins:
+    enable_alpha: true
+
+# Plugins to install
+plugins:
+  - grafana-piechart-panel
+  - grafana-clock-panel
+
+# Service Monitor for Prometheus
+serviceMonitor:
+  enabled: true
+  labels:
+    release: prometheus
+
+# Resources
+resources:
+  requests:
+    cpu: 100m
+    memory: 256Mi
+  limits:
+    cpu: 500m
+    memory: 1Gi
+
+# Environment variables
+env:
+  GF_INSTALL_PLUGINS: grafana-datadog-datasource
+
+# Extra environment variables piechart-panel,grafana-clock-panel
+envFromSecret: grafana-secrets
+
+# Sidecar for dynamic dashboard loading
+sidecar:
+  dashboards:
+    enabled: true
+    label: grafana_dashboard
+    folder: /tmp/dashboards
+    defaultFolderName: General
+    searchNamespace: ALL
+
+  datasources:
+    enabled: true
+    label: grafana_datasource
+    searchNamespace: ALL
