@@ -66,6 +66,8 @@ module "eks" {
 module "argocd" {
   source = "./modules/argocd"
 
+  cluster_name           = module.eks.cluster_name
+  aws_region             = var.aws_region
   cluster_endpoint       = module.eks.cluster_endpoint
   cluster_ca_certificate = module.eks.cluster_certificate_authority
   gitops_repo_url        = var.gitops_repo_url

@@ -9,6 +9,16 @@ variable "cluster_ca_certificate" {
   sensitive   = true
 }
 
+variable "cluster_name" {
+  description = "Nome do cluster EKS"
+  type        = string
+}
+
+variable "aws_region" {
+  description = "Região AWS onde o cluster EKS está provisionado"
+  type        = string
+}
+
 variable "gitops_repo_url" {
   description = "URL HTTPS do repositório GitHub que contém os manifestos GitOps"
   type        = string

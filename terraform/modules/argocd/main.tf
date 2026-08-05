@@ -69,6 +69,23 @@ resource "null_resource" "app_of_apps" {
 
   provisioner "local-exec" {
     command = <<-EOT
+      # Configurar kubectl para acessar o cluster EKS
+      echo "🔧 Configurando kubectl para cluster ${var.cluster_name}..."
+      aws eks update-kubeconfig --region ${var.aws_region} --name ${var.cluster_name}
+      
+      # Aguardar cluster estar pronto
+      echo "⏳ Aguardando cluster estar acessível..."
+      for i in {1..30}; do
+        if kubectl get nodes &>/dev/null; then
+          echo "✅ Cluster acessível!"
+          break
+        fi
+        echo "Tentativa $i/30..."
+        sleep 10
+      done
+      
+      # Aplicar App of Apps
+      echo "📦 Aplicando ArgoCD App of Apps..."
       kubectl apply -f - <<EOF
       apiVersion: argoproj.io/v1alpha1
       kind: Application
@@ -93,6 +110,8 @@ resource "null_resource" "app_of_apps" {
           syncOptions:
             - CreateNamespace=true
       EOF
+      
+      echo "✅ App of Apps aplicado com sucesso!"
     EOT
   }
 

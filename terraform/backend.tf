@@ -17,7 +17,7 @@ terraform {
   }
 
   backend "s3" {
-    bucket       = "fiap-terraform-state-639645545526"
+    bucket       = "fiap-terraform-state-555509860564"
     key          = "fase03/terraform.tfstate"
     region       = "us-east-1"
     use_lockfile = true
