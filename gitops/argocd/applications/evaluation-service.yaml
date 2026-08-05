@@ -8,7 +8,7 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: https://github.com/jc-perroni/fiap-fase-3.git
+    repoURL: https://github.com/jc-perroni/Fiap_Fase4.git
     targetRevision: main
     path: gitops/apps/evaluation-service
   destination:
