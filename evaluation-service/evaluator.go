@@ -8,6 +8,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"net/url"
 	"os"
 	"sync"
 	"time"
@@ -17,6 +18,22 @@ const (
 	// Tempo de vida do cache em segundos
 	CACHE_TTL = 30 * time.Second
 )
+
+// validateServiceURL validates that the provided URL is a properly formed HTTP/HTTPS URL
+// This prevents SSRF attacks by ensuring URLs come from controlled configuration
+func validateServiceURL(rawURL string) (string, error) {
+	parsedURL, err := url.Parse(rawURL)
+	if err != nil {
+		return "", fmt.Errorf("invalid URL: %w", err)
+	}
+
+	// Only allow http and https schemes
+	if parsedURL.Scheme != "http" && parsedURL.Scheme != "https" {
+		return "", fmt.Errorf("invalid URL scheme: %s", parsedURL.Scheme)
+	}
+
+	return rawURL, nil
+}
 
 // getDecision é o wrapper principal
 func (a *App) getDecision(userID, flagName string) (bool, error) {
@@ -103,10 +120,14 @@ func (a *App) fetchFromServices(flagName string) (*CombinedFlagInfo, error) {
 
 // fetchFlag (função helper)
 func (a *App) fetchFlag(flagName string) (*Flag, error) {
-	url := fmt.Sprintf("%s/flags/%s", a.FlagServiceURL, flagName) // nosec G704 - URL from controlled service config
+	baseURL, err := validateServiceURL(a.FlagServiceURL)
+	if err != nil {
+		return nil, fmt.Errorf("invalid flag service URL: %w", err)
+	}
+	url := fmt.Sprintf("%s/flags/%s", baseURL, flagName)
 
 	apiKey := os.Getenv("SERVICE_API_KEY")
-	req, err := http.NewRequest("GET", url, nil) // nosec G704 - URL from controlled service config
+	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		return nil, fmt.Errorf("erro ao criar requisição: %w", err)
 	}
@@ -134,9 +155,13 @@ func (a *App) fetchFlag(flagName string) (*Flag, error) {
 }
 
 func (a *App) fetchRule(flagName string) (*TargetingRule, error) {
-	url := fmt.Sprintf("%s/rules/%s", a.TargetingServiceURL, flagName) // nosec G704 - URL from controlled service config
+	baseURL, err := validateServiceURL(a.TargetingServiceURL)
+	if err != nil {
+		return nil, fmt.Errorf("invalid targeting service URL: %w", err)
+	}
+	url := fmt.Sprintf("%s/rules/%s", baseURL, flagName)
 	apiKey := os.Getenv("SERVICE_API_KEY") // Usa a mesma chave
-	req, err := http.NewRequest("GET", url, nil) // nosec G704 - URL from controlled service config
+	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		return nil, fmt.Errorf("erro ao criar requisição: %w", err)
 	}
