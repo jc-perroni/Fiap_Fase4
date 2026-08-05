@@ -9,7 +9,7 @@ metadata:
     # Tag atualizada automaticamente pelo pipeline de CI
     deployment.kubernetes.io/revision: "1"
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
       app: auth-service
@@ -39,11 +39,11 @@ spec:
                   key: MASTER_KEY
           resources:
             requests:
+              cpu: "50m"
+              memory: "64Mi"
+            limits:
               cpu: "100m"
               memory: "128Mi"
-            limits:
-              cpu: "250m"
-              memory: "256Mi"
           readinessProbe:
             httpGet:
               path: /health
