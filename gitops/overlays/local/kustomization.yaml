@@ -21,19 +21,19 @@ patchesStrategicMerge:
 
 # Patches para imagens locais
 images:
-  - name: 639645545526.dkr.ecr.us-east-1.amazonaws.com/pos2/analytics-service
+  - name: 555509860564.dkr.ecr.us-east-1.amazonaws.com/pos2/analytics-service
     newName: fase04-analytics-service
     newTag: latest
-  - name: 639645545526.dkr.ecr.us-east-1.amazonaws.com/pos2/auth-service
+  - name: 555509860564.dkr.ecr.us-east-1.amazonaws.com/pos2/auth-service
     newName: fase04-auth-service
     newTag: latest
-  - name: 639645545526.dkr.ecr.us-east-1.amazonaws.com/pos2/evaluation-service
+  - name: 555509860564.dkr.ecr.us-east-1.amazonaws.com/pos2/evaluation-service
     newName: fase04-evaluation-service
     newTag: latest
-  - name: 639645545526.dkr.ecr.us-east-1.amazonaws.com/pos2/flag-service
+  - name: 555509860564.dkr.ecr.us-east-1.amazonaws.com/pos2/flag-service
     newName: fase04-flag-service
     newTag: latest
-  - name: 639645545526.dkr.ecr.us-east-1.amazonaws.com/pos2/targeting-service
+  - name: 555509860564.dkr.ecr.us-east-1.amazonaws.com/pos2/targeting-service
     newName: fase04-targeting-service
     newTag: latest
 

@@ -21,7 +21,7 @@ spec:
       containers:
         - name: auth-service
           # ci-managed-image: tag atualizada pelo job update-gitops do CI
-          image: 639645545526.dkr.ecr.us-east-1.amazonaws.com/pos2/auth-service:v1.0.0-dd07ed9
+          image: 555509860564.dkr.ecr.us-east-1.amazonaws.com/pos2/auth-service:v1.0.0-dd07ed9
           ports:
             - containerPort: 8001
           env:
