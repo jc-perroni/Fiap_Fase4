@@ -15,6 +15,8 @@ spec:
       labels:
         app: targeting-service
     spec:
+      imagePullSecrets:
+        - name: ecr-secret
       containers:
         - name: targeting-service
           # ci-managed-image: tag atualizada pelo job update-gitops do CI

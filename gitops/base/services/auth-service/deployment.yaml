@@ -18,6 +18,8 @@ spec:
       labels:
         app: auth-service
     spec:
+      imagePullSecrets:
+        - name: ecr-secret
       containers:
         - name: auth-service
           # ci-managed-image: tag atualizada pelo job update-gitops do CI
