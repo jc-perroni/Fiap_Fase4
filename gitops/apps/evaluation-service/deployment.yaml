@@ -18,7 +18,7 @@ spec:
       containers:
         - name: evaluation-service
           # ci-managed-image: tag atualizada pelo job update-gitops do CI
-          image: 639645545526.dkr.ecr.us-east-1.amazonaws.com/pos2/evaluation-service:latest
+          image: 639645545526.dkr.ecr.us-east-1.amazonaws.com/pos2/evaluation-service:v1.0.0-d0b0c45
           ports:
             - containerPort: 8004
           env:
