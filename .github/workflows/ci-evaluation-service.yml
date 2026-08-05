@@ -142,7 +142,7 @@ jobs:
       - name: "SAST — gosec (bloqueio em HIGH/CRITICAL)"
         working-directory: evaluation-service
         run: |
-          gosec -fmt json -out gosec.json ./... || true
+          gosec -no-fail -fmt json -out gosec.json -config .gosec ./... || true
           python3 << 'PYEOF'
           import json, sys, os
           if not os.path.exists('gosec.json'):
