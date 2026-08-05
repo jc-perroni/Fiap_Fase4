@@ -1,0 +1,3 @@
+# Este arquivo força a execução dos workflows CI/CD
+# Atualizado em: $(date)
+Trigger build: $(date +%s)
