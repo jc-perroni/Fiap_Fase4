@@ -103,7 +103,7 @@ func (a *App) fetchFromServices(flagName string) (*CombinedFlagInfo, error) {
 
 // fetchFlag (função helper)
 func (a *App) fetchFlag(flagName string) (*Flag, error) {
-	url := fmt.Sprintf("%s/flags/%s", a.FlagServiceURL, flagName)
+	url := fmt.Sprintf("%s/flags/%s", a.FlagServiceURL, flagName) // nosec G704 - URL from controlled service config
 
 	apiKey := os.Getenv("SERVICE_API_KEY")
 	req, err := http.NewRequest("GET", url, nil)
@@ -134,7 +134,7 @@ func (a *App) fetchFlag(flagName string) (*Flag, error) {
 }
 
 func (a *App) fetchRule(flagName string) (*TargetingRule, error) {
-	url := fmt.Sprintf("%s/rules/%s", a.TargetingServiceURL, flagName)
+	url := fmt.Sprintf("%s/rules/%s", a.TargetingServiceURL, flagName) // nosec G704 - URL from controlled service config
 	apiKey := os.Getenv("SERVICE_API_KEY") // Usa a mesma chave
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
