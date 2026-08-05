@@ -57,8 +57,7 @@ func InitOpenTelemetry(serviceName, serviceVersion string) (func(context.Context
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
-	conn, err := grpc.DialContext(
-		ctx,
+	conn, err := grpc.NewClient(
 		otelEndpoint,
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 	)
