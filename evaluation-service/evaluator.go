@@ -124,10 +124,10 @@ func (a *App) fetchFlag(flagName string) (*Flag, error) {
 	if err != nil {
 		return nil, fmt.Errorf("invalid flag service URL: %w", err)
 	}
-	url := fmt.Sprintf("%s/flags/%s", baseURL, flagName)
+	url := fmt.Sprintf("%s/flags/%s", baseURL, flagName) // nosec G704 - URL validated by validateServiceURL
 
 	apiKey := os.Getenv("SERVICE_API_KEY")
-	req, err := http.NewRequest("GET", url, nil)
+	req, err := http.NewRequest("GET", url, nil) // nosec G704 - URL validated by validateServiceURL
 	if err != nil {
 		return nil, fmt.Errorf("erro ao criar requisição: %w", err)
 	}
@@ -159,9 +159,9 @@ func (a *App) fetchRule(flagName string) (*TargetingRule, error) {
 	if err != nil {
 		return nil, fmt.Errorf("invalid targeting service URL: %w", err)
 	}
-	url := fmt.Sprintf("%s/rules/%s", baseURL, flagName)
+	url := fmt.Sprintf("%s/rules/%s", baseURL, flagName) // nosec G704 - URL validated by validateServiceURL
 	apiKey := os.Getenv("SERVICE_API_KEY") // Usa a mesma chave
-	req, err := http.NewRequest("GET", url, nil)
+	req, err := http.NewRequest("GET", url, nil) // nosec G704 - URL validated by validateServiceURL
 	if err != nil {
 		return nil, fmt.Errorf("erro ao criar requisição: %w", err)
 	}

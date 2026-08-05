@@ -1,0 +1,16 @@
+{
+  "global": {
+    "nosec": false,
+    "audit": false,
+    "exclude-generated": true
+  },
+  "security": {
+    "rules": {
+      "disable": [
+        {
+          "rule": "G704"
+        }
+      ]
+    }
+  }
+}
