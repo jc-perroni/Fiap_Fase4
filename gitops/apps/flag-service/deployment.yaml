@@ -18,7 +18,7 @@ spec:
       containers:
         - name: flag-service
           # ci-managed-image: tag atualizada pelo job update-gitops do CI
-          image: 555509860564.dkr.ecr.us-east-1.amazonaws.com/pos2/flag-service:latest
+          image: 555509860564.dkr.ecr.us-east-1.amazonaws.com/pos2/flag-service:v1.0.0-6e8c656
           ports:
             - containerPort: 5000
           env:
