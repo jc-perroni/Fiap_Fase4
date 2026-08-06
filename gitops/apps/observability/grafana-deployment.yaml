@@ -76,8 +76,7 @@ spec:
               memory: 1Gi
       volumes:
         - name: storage
-          persistentVolumeClaim:
-            claimName: grafana-pvc
+          emptyDir: {} # Temporary storage - data will be lost on pod restart
         - name: config
           configMap:
             name: grafana-config

@@ -71,14 +71,8 @@ spec:
         - name: config
           configMap:
             name: loki-config
-  volumeClaimTemplates:
-    - metadata:
-        name: storage
-      spec:
-        accessModes: ["ReadWriteOnce"]
-        resources:
-          requests:
-            storage: 10Gi
+        - name: storage
+          emptyDir: {} # Temporary storage - logs will be lost on pod restart
 ---
 apiVersion: v1
 kind: ConfigMap
