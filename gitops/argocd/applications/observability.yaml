@@ -36,6 +36,7 @@ spec:
     targetRevision: 55.5.0
     helm:
       releaseName: prometheus
+      skipCrds: false
       valueFiles:
         - values.yaml
       values: |
@@ -66,6 +67,7 @@ spec:
       selfHeal: true
     syncOptions:
       - CreateNamespace=true
+      - Replace=true
 ---
 apiVersion: argoproj.io/v1alpha1
 kind: Application
