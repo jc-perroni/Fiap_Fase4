@@ -8,47 +8,16 @@ data:
     global:
       resolve_timeout: 5m
 
-    # External integrations
+    # Receivers configuration
     receivers:
       - name: 'null'
-      
-      - name: 'pagerduty-critical'
-        pagerduty_configs:
-          - service_key: 'c62c9e6fbbdf4508c09947a5d91cacda'
-            description: '{{ .CommonAnnotations.summary }}'
-            severity: '{{ .CommonLabels.severity }}'
-            details:
-              firing: '{{ template "pagerduty.default.instances" .Alerts.Firing }}'
-              resolved: '{{ template "pagerduty.default.instances" .Alerts.Resolved }}'
-              num_firing: '{{ .Alerts.Firing | len }}'
-              num_resolved: '{{ .Alerts.Resolved | len }}'
-      
-      - name: 'slack-notifications'
-        slack_configs:
-          - api_url: 'YOUR_SLACK_WEBHOOK_URL'
-            channel: '#alerts'
-            title: '{{ .CommonLabels.alertname }}'
-            text: |
-              {{ range .Alerts }}
-              *Alert:* {{ .Labels.alertname }} - {{ .Labels.severity }}
-              *Description:* {{ .Annotations.description }}
-              *Service:* {{ .Labels.service }}
-              *Details:*
-              {{ range .Labels.SortedPairs }} • *{{ .Name }}:* `{{ .Value }}`
-              {{ end }}
-              {{ end }}
-            send_resolved: true
       
       - name: 'webhook-self-healing'
         webhook_configs:
           - url: 'http://self-healing-webhook.observability.svc.cluster.local:8080/alert'
             send_resolved: true
-            http_config:
-              basic_auth:
-                username: 'webhook'
-                password: 'YOUR_WEBHOOK_PASSWORD'
 
-    # Routing rules
+    # Routing rules - default to null receiver
     route:
       group_by: ['alertname', 'service']
       group_wait: 10s
@@ -57,24 +26,12 @@ data:
       receiver: 'null'
       
       routes:
-        # Critical alerts go to PagerDuty
-        - match:
-            severity: critical
-          receiver: pagerduty-critical
-          continue: true
-        
-        # All alerts go to Slack
-        - match_re:
-            severity: warning|critical
-          receiver: slack-notifications
-          continue: true
-        
         # Self-healing webhook for specific alerts
         - match_re:
             alertname: AuthServiceHighErrorRate|ServiceDown|PodRestartLoop
           receiver: webhook-self-healing
 
-    # Inhibition rules (suppress alerts when others are firing)
+    # Inhibition rules (suppress warnings when critical alerts are firing)
     inhibit_rules:
       - source_match:
           severity: 'critical'
